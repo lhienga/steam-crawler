@@ -117,7 +117,7 @@ def main():
         '-i', '--input', help='Input file or path (all files in subpath are processed)', default="./data/pages/reviews",
         required=False)
     parser.add_argument(
-        '-o', '--output', help='Output file', default='./data/reviews.csv', required=False)
+        '-o', '--output', help='Output file', default='./data/reviews_new.csv', required=False)
     args = parser.parse_args()
 
     extract_reviews(args.input, args.output)

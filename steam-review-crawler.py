@@ -54,7 +54,7 @@ def getgameids(filename):
     return ids
 
 
-def getgamereviews(ids, timeout, maxretries, pause, out):
+def getgamereviews(ids, timeout, maxretries, pause, out, maxreviews):
     urltemplate = string.Template(
         'http://store.steampowered.com//appreviews/$id?cursor=$cursor&filter=recent&language=english')
     endre = re.compile(r'({"success":2})|(no_more_reviews)')
@@ -80,7 +80,8 @@ def getgamereviews(ids, timeout, maxretries, pause, out):
         page = 1
         maxError = 10
         errorCount = 0
-        while True:
+        reviews_crawled = 0  # Counter for reviews crawled for the current game
+        while reviews_crawled < maxreviews:  # Check if maximum reviews per game limit is reached
             url = urltemplate.substitute({'id': id_, 'cursor': cursor})
             print(offset, url)
             htmlpage = download_page(url, maxretries, timeout, pause)
@@ -98,9 +99,10 @@ def getgamereviews(ids, timeout, maxretries, pause, out):
                     if endre.search(htmlpage):
                         break
                     f.write(htmlpage)
-                    page = page + 1
+                    page += 1
                     parsed_json = (json.loads(htmlpage))
                     cursor = urllib.parse.quote(parsed_json['cursor'])
+                    reviews_crawled += 1  # Increment the counter by the number of reviews crawled in this page
 
         with open(donefilename, 'w', encoding='utf-8') as f:
             pass
@@ -121,7 +123,8 @@ def main():
         type=float)
     parser.add_argument(
         '-m', '--maxreviews', help='Maximum number of reviews per item to download. Default:unlimited', required=False,
-        type=int, default=-1)
+        type=int, default=100)
+    
     parser.add_argument(
         '-o', '--out', help='Output base path', required=False, default='data')
     parser.add_argument(
@@ -135,7 +138,7 @@ def main():
 
     print('%s games' % len(ids))
 
-    getgamereviews(ids, args.timeout, args.maxretries, args.pause, args.out)
+    getgamereviews(ids, args.timeout, args.maxretries, args.pause, args.out, args.maxreviews)
 
 
 if __name__ == '__main__':
